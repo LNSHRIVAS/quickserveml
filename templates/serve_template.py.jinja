@@ -1,0 +1,26 @@
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
+import numpy as np 
+import onnxruntime as ort
+
+app = FastAPI()
+
+session = ort.InferenceSession("{{ model_filename }}", providers = ["CPUExecutionProvider"])
+input_name = session.get_inputs()[0].name
+
+
+class InputData(BaseModel):
+    data: list
+
+
+@app.post("/predict")
+
+def predict(input: InputData):
+
+    x = np.array(input.data, dtype = np.float32)
+    x = x.reshape({{ input_shape }})
+    output = session.run(None, {input_name: x})[0]
+
+    return { "prediction": output.tolist() }
+
+

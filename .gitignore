@@ -1,1 +1,9 @@
+__pycache__/
 .venv/
+*.pyc
+*.onnx
+*.log
+*.egg-info/
+build/
+dist/
+serve.py
