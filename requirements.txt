@@ -1,0 +1,9 @@
+onnx
+onnxruntime
+click
+fastapi
+uvicorn
+pydantic
+jinja2
+requests
+netron 
