@@ -110,4 +110,7 @@ ENV/
 env.bak/
 
 # Generated server file
-serve.py 
+serve.py
+
+# ONNX models (optional - uncomment if you don't want to track model files)
+# *.onnx

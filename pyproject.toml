@@ -1,0 +1,25 @@
+[project]
+name = "quickserveml"
+version = "0.1.0"
+description = "One-command ONNX model → FastAPI Docker server"
+authors = [ { name="Lakshminarayan Shrivas", email="lakshminarayanshrivas7@gmail.com" } ]
+dependencies = [
+    "onnx",
+    "onnxruntime",
+    "click",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "jinja2"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project.scripts]
+quickserveml = "quickserveml.cli:cli"
+
+[too.setuptools]
+packages = ["quickserveml"]
