@@ -6,4 +6,5 @@ uvicorn
 pydantic
 jinja2
 requests
-netron 
+netron
+psutil 

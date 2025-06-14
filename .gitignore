@@ -19,9 +19,13 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -43,6 +47,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+*.py,cover
 .hypothesis/
 .pytest_cache/
 
@@ -53,6 +58,8 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
+db.sqlite3
+db.sqlite3-journal
 
 # Flask stuff:
 instance/
@@ -62,10 +69,10 @@ instance/
 .scrapy
 
 # Sphinx documentation
-/docs/_build/
+docs/_build/
 
 # PyBuilder
-.target/
+target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -78,39 +85,73 @@ ipython_config.py
 .python-version
 
 # pipenv
-Pipfile.lock
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
 
-# poetry
-poetry.lock
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
 
 # mypy
 .mypy_cache/
 .dmypy.json
+dmypy.json
 
 # Pyre type checker
 .pyre/
 
-# pytype
-.pytype/
+# QuickServeML specific
+*.onnx
+serve.py
+model_schema.json
+sample_batch.json
+test_schema.json
+*.log
 
-# Cython debug symbols
-cython_debug/
-
-# VS Code
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# OS files
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Virtual environment
-venv/
-.venv/
-ENV/
-env.bak/
-
-# Generated server file
-serve.py
-
-# ONNX models (optional - uncomment if you don't want to track model files)
-# *.onnx
+# Temporary files
+*.tmp
+*.temp
