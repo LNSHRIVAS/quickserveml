@@ -155,3 +155,5 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+PYPI_SETUP_GUIDE.md
