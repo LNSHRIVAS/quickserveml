@@ -42,7 +42,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Skip PyPI Publishing
+        if: ${{ secrets.PYPI_API_TOKEN == '' }}
+        run: |
+          echo "⚠️  PyPI publishing skipped - PYPI_API_TOKEN not configured"
+          echo "To enable PyPI publishing:"
+          echo "1. Create a PyPI account at https://pypi.org"
+          echo "2. Generate an API token at https://pypi.org/manage/account/token/"
+          echo "3. Add the token as PYPI_API_TOKEN secret in GitHub repository settings"
+
       - name: Publish to PyPI
+        if: ${{ secrets.PYPI_API_TOKEN != '' }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
