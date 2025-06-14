@@ -1,4 +1,4 @@
-# QuickServeML 🚀
+# QuickServeML
 
 **One-command ONNX model serving, benchmarking, and visual inspection for researchers and ML engineers.**
 
@@ -9,28 +9,28 @@
 
 ---
 
-## 🎯 **What is QuickServeML?**
+## What is QuickServeML?
 
 QuickServeML is a comprehensive CLI tool that transforms ONNX models into production-ready APIs with just one command. It provides essential features for ML model analysis, optimization, and deployment:
 
-- **🚀 Instant Deployment**: Deploy any ONNX model as a FastAPI server
-- **📊 Performance Benchmarking**: Comprehensive latency, throughput, and resource metrics
-- **🔍 Schema Validation**: Automatic input/output validation and OpenAPI documentation
-- **📦 Batch Processing**: Optimize throughput with configurable batch sizes
-- **🖼️ Visual Inspection**: Interactive model graph visualization with Netron
-- **📚 Auto Documentation**: Swagger UI with example requests and responses
+- **Instant Deployment**: Deploy any ONNX model as a FastAPI server
+- **Performance Benchmarking**: Comprehensive latency, throughput, and resource metrics
+- **Schema Validation**: Automatic input/output validation and OpenAPI documentation
+- **Batch Processing**: Optimize throughput with configurable batch sizes
+- **Visual Inspection**: Interactive model graph visualization with Netron
+- **Auto Documentation**: Swagger UI with example requests and responses
 
 ---
 
-## ✨ **Key Features**
+## Key Features
 
-### 🚀 **One-Command Deployment**
+### One-Command Deployment
 ```bash
-quickserveml deploy model.onnx --port 8000
+quickserveml serve model.onnx --port 8000
 ```
-Instantly creates a production-ready FastAPI server with automatic documentation.
+Instantly creates a production-ready FastAPI server with comprehensive API endpoints and automatic documentation.
 
-### 📊 **Performance Benchmarking**
+### Performance Benchmarking
 ```bash
 quickserveml benchmark model.onnx --verbose
 ```
@@ -40,7 +40,7 @@ Get comprehensive performance metrics:
 - **Resource Usage**: Memory and CPU utilization
 - **Warmup Analysis**: Consistent performance measurements
 
-### 🔍 **Schema Generation & Validation**
+### Schema Generation & Validation
 ```bash
 quickserveml schema model.onnx --save schema.json
 ```
@@ -49,7 +49,7 @@ quickserveml schema model.onnx --save schema.json
 - **Example data generation** for testing
 - **JSON export** for external tool integration
 
-### 📦 **Batch Processing Optimization**
+### Batch Processing Optimization
 ```bash
 quickserveml batch model.onnx --optimize --verbose
 ```
@@ -58,7 +58,7 @@ quickserveml batch model.onnx --optimize --verbose
 - **Real data file support** (JSON format)
 - **Performance comparison** across different configurations
 
-### 🖼️ **Model Visualization**
+### Model Visualization
 ```bash
 quickserveml deploy model.onnx --visualize
 ```
@@ -66,7 +66,7 @@ Opens Netron for interactive model graph inspection.
 
 ---
 
-## 🛠️ **Installation**
+## Installation
 
 ### From Source (Recommended)
 ```bash
@@ -84,48 +84,49 @@ pip install quickserveml
 
 ---
 
-## 🏁 **Quick Start**
+## Quick Start
 
-### 1. **Deploy Your First Model**
+### 1. Deploy Your First Model
 ```bash
 # Download a sample model
 wget https://github.com/onnx/models/raw/main/vision/classification/mnist/model/mnist-8.onnx
 
-# Deploy with visualization
-quickserveml deploy mnist-8.onnx --port 8000 --visualize
+# Deploy comprehensive API server
+quickserveml serve mnist-8.onnx --port 8000
 ```
 
-### 2. **Benchmark Performance**
+### 2. Benchmark Performance
 ```bash
 quickserveml benchmark mnist-8.onnx --benchmark-runs 100 --verbose
 ```
 
-### 3. **Generate Schema**
+### 3. Generate Schema
 ```bash
 quickserveml schema mnist-8.onnx --save model_schema.json --verbose
 ```
 
-### 4. **Optimize Batch Processing**
+### 4. Optimize Batch Processing
 ```bash
 quickserveml batch mnist-8.onnx --optimize --verbose
 ```
 
-### 5. **Access Your API**
+### 5. Access Your API
 - **API**: http://localhost:8000/predict
 - **Docs**: http://localhost:8000/docs
-- **Netron**: http://localhost:8080
+- **Health**: http://localhost:8000/health
+- **Model Info**: http://localhost:8000/model/info
 
 ---
 
-## 📖 **Detailed Usage**
+## Detailed Usage
 
-### **Model Inspection**
+### Model Inspection
 ```bash
 quickserveml inspect model.onnx
 ```
 Shows model inputs, outputs, and runs a test inference.
 
-### **Performance Benchmarking**
+### Performance Benchmarking
 ```bash
 # Quick benchmark
 quickserveml benchmark model.onnx
@@ -141,30 +142,30 @@ quickserveml benchmark model.onnx \
 **Example Output:**
 ```
 ============================================================
-📊 BENCHMARK RESULTS
+BENCHMARK RESULTS
 ============================================================
 Model: mnist-8.onnx
 Input Shape: [1, 1, 28, 28]
 Output Shape: [1, 10]
 
-⏱️  INFERENCE TIMING
+INFERENCE TIMING
   Average: 0.16 ms
   Min:     0.11 ms
   Max:     0.34 ms
   95th %:  0.28 ms
   99th %:  0.32 ms
 
-🚀 PERFORMANCE
+PERFORMANCE
   Throughput: 6131.4 requests/second
   Total benchmark time: 0.0 seconds
 
-💾 RESOURCE USAGE
+RESOURCE USAGE
   Memory usage: 71.6 MB
   CPU usage: 2.4%
 ============================================================
 ```
 
-### **Schema Generation**
+### Schema Generation
 ```bash
 # Generate and display schema
 quickserveml schema model.onnx --verbose
@@ -175,37 +176,34 @@ quickserveml schema model.onnx --save model_schema.json
 
 **Example Output:**
 ```
-📋 MODEL SCHEMA: mnist-8.onnx
+MODEL SCHEMA: mnist-8.onnx
 ============================================================
 
-📥 INPUTS:
+INPUTS:
   1. Input3
      Shape: 1 x 1 x 28 x 28
      Type: tensor(float)
      Description: Input tensor: Input3
 
-📤 OUTPUTS:
+OUTPUTS:
   1. Plus214_Output_0
      Shape: 1 x 10
      Type: tensor(float)
      Description: Output tensor: Plus214_Output_0
 ```
 
-### **Batch Processing**
+### Batch Processing
 ```bash
 # Process synthetic batch
 quickserveml batch model.onnx --batch-size 50 --verbose
 
 # Process batch from JSON file
 quickserveml batch model.onnx --batch-file data.json --parallel
-
-# Find optimal batch size
-quickserveml batch model.onnx --optimize --verbose
 ```
 
 **Example Output:**
 ```
-📊 BATCH SIZE BENCHMARK RESULTS
+BATCH SIZE BENCHMARK RESULTS
 ============================================================
 Batch Size   Throughput      Avg Time     Total Time
 ------------------------------------------------------------
@@ -215,13 +213,16 @@ Batch Size   Throughput      Avg Time     Total Time
 16           3017.6          0.34         0.005
 32           3040.8          0.35         0.011
 ------------------------------------------------------------
-🎯 Optimal batch size: 8 (3159.3 samples/sec)
+Optimal batch size: 8 (3159.3 samples/sec)
 ```
 
-### **Model Deployment**
+### Model Deployment
 ```bash
-# Basic deployment
+# Basic deployment (simple prediction endpoint)
 quickserveml deploy model.onnx --port 8000
+
+# Comprehensive API server (all endpoints)
+quickserveml serve model.onnx --port 8000
 
 # With visualization
 quickserveml deploy model.onnx --port 8000 --visualize
@@ -229,30 +230,57 @@ quickserveml deploy model.onnx --port 8000 --visualize
 
 ---
 
-## 🔧 **API Usage**
+## API Usage
 
-Once deployed, your model is available as a REST API:
+Once deployed, your model is available as a REST API with comprehensive endpoints:
 
-### **Single Prediction**
-```bash
-curl -X POST "http://localhost:8000/predict" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "Input3": [0.1, 0.2, 0.3, ...]
-  }'
-```
-
-### **Health Check**
+### Health Check
 ```bash
 curl http://localhost:8000/health
 ```
 
-### **Get Schema**
+### Single Prediction
 ```bash
-curl http://localhost:8000/schema
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": [0.1, 0.2, 0.3, ...]
+  }'
 ```
 
-### **Interactive Documentation**
+### Batch Processing
+```bash
+curl -X POST "http://localhost:8000/model/batch" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "batch": [[0.1, 0.2, ...], [0.3, 0.4, ...]],
+    "batch_size": 10,
+    "parallel": false
+  }'
+```
+
+### Performance Benchmarking
+```bash
+curl -X POST "http://localhost:8000/model/benchmark" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "warmup_runs": 10,
+    "benchmark_runs": 100,
+    "provider": "CPUExecutionProvider"
+  }'
+```
+
+### Model Information
+```bash
+curl http://localhost:8000/model/info
+```
+
+### Get Schema
+```bash
+curl http://localhost:8000/model/schema
+```
+
+### Interactive Documentation
 Visit http://localhost:8000/docs for Swagger UI with:
 - **Automatic schema validation**
 - **Example requests** with sample data
@@ -261,22 +289,22 @@ Visit http://localhost:8000/docs for Swagger UI with:
 
 ---
 
-## 📊 **Performance Features**
+## Performance Features
 
-### **Comprehensive Benchmarking**
+### Comprehensive Benchmarking
 - **Latency Analysis**: Average, min, max, percentiles
 - **Throughput Calculation**: Requests per second
 - **Resource Monitoring**: Memory and CPU usage
 - **Warmup Runs**: Ensures consistent measurements
 - **Configurable Testing**: Customizable run counts
 
-### **Batch Optimization**
+### Batch Optimization
 - **Automatic Optimization**: Finds optimal batch size
 - **Parallel Processing**: Multi-threaded inference
 - **Error Handling**: Graceful failure management
 - **Performance Comparison**: Across different configurations
 
-### **Schema Validation**
+### Schema Validation
 - **Runtime Validation**: Input shape and type checking
 - **OpenAPI Integration**: Automatic documentation
 - **Example Generation**: Sample data for testing
@@ -284,21 +312,21 @@ Visit http://localhost:8000/docs for Swagger UI with:
 
 ---
 
-## 🎯 **Use Cases**
+## Use Cases
 
-### **For Researchers**
+### For Researchers
 - **Quick Model Testing**: Instant deployment for experimentation
 - **Performance Analysis**: Benchmark different model architectures
 - **Visual Inspection**: Interactive model graph exploration
 - **Schema Understanding**: Detailed input/output analysis
 
-### **For ML Engineers**
+### For ML Engineers
 - **Production Deployment**: One-command API creation
 - **Performance Optimization**: Batch size and resource tuning
 - **API Documentation**: Automatic OpenAPI generation
 - **Input Validation**: Runtime error prevention
 
-### **For DevOps Teams**
+### For DevOps Teams
 - **Health Monitoring**: Built-in health check endpoints
 - **Resource Tracking**: Memory and CPU utilization
 - **Performance Metrics**: Latency and throughput monitoring
@@ -306,24 +334,23 @@ Visit http://localhost:8000/docs for Swagger UI with:
 
 ---
 
-## 🧪 **Testing**
+## Testing
 
-Run the comprehensive demo to test all features:
+Run the comprehensive test suite to validate all features:
 
 ```bash
-python examples/comprehensive_demo.py mnist-8.onnx
+python test_api_endpoints.py
 ```
 
-This will demonstrate:
-- Model inspection
-- Schema generation and validation
-- Performance benchmarking
-- Batch processing optimization
-- API integration features
+This will test:
+- All API endpoints with valid and invalid data
+- Edge cases and error conditions
+- Performance under load
+- Error handling and validation
 
 ---
 
-## 📁 **Project Structure**
+## Project Structure
 
 ```
 quickserveml/
@@ -339,6 +366,7 @@ quickserveml/
 │   └── serve_template.py.jinja  # Server template
 ├── examples/
 │   └── comprehensive_demo.py    # Feature demonstration
+├── test_api_endpoints.py   # Comprehensive API testing
 ├── requirements.txt
 ├── pyproject.toml
 └── README.md
@@ -346,11 +374,11 @@ quickserveml/
 
 ---
 
-## 🤝 **Contributing**
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
-### **Development Setup**
+### Development Setup
 ```bash
 git clone https://github.com/LNSHRIVAS/quickserveml.git
 cd quickserveml
@@ -360,10 +388,10 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-### **Running Tests**
+### Running Tests
 ```bash
 # Test all features
-python examples/comprehensive_demo.py mnist-8.onnx
+python test_api_endpoints.py
 
 # Test individual commands
 quickserveml inspect mnist-8.onnx
@@ -374,13 +402,13 @@ quickserveml batch mnist-8.onnx --optimize
 
 ---
 
-## 📄 **License**
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 👤 **Author**
+## Author
 
 **Lakshminarayan Shrivas**  
 - GitHub: [@LNSHRIVAS](https://github.com/LNSHRIVAS)
@@ -388,7 +416,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 **Acknowledgments**
+## Acknowledgments
 
 - [ONNX Runtime](https://github.com/microsoft/onnxruntime) for model inference
 - [FastAPI](https://fastapi.tiangolo.com/) for API framework
@@ -397,7 +425,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## ⭐ **Star this repo if you find it useful!**
+## Star this repo if you find it useful!
 
 [![GitHub stars](https://img.shields.io/github/stars/LNSHRIVAS/quickserveml?style=social)](https://github.com/LNSHRIVAS/quickserveml/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/LNSHRIVAS/quickserveml?style=social)](https://github.com/LNSHRIVAS/quickserveml/network)

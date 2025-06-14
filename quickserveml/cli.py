@@ -162,7 +162,8 @@ def batch(model_path, batch_file, batch_size, parallel, max_workers, optimize, v
 @cli.command()
 @click.argument("model_path", type=click.Path(exists=True, dir_okay=False))
 @click.option("--port", default=8000, help="Port to run the API on")
-def deploy(model_path, port):
+@click.option("--basic", is_flag=True, help="Deploy basic API (prediction only)")
+def deploy(model_path, port, basic):
     """Deploy an ONNX model as a FastAPI server."""
     from onnxruntime import InferenceSession
 
@@ -176,8 +177,15 @@ def deploy(model_path, port):
     if os.path.abspath(model_path) != os.path.abspath(f"./{model_filename}"):
         shutil.copy(model_path, f"./{model_filename}")
 
+    # Choose template based on deployment type
+    if basic:
+        template_path = os.path.join("templates", "serve_template_basic.py.jinja")
+        print("🚀 Deploying basic API (prediction only)...")
+    else:
+        template_path = os.path.join("templates", "serve_template.py.jinja")
+        print("🚀 Deploying comprehensive API with all features...")
+
     # Load and render Jinja template
-    template_path = os.path.join("templates", "serve_template.py.jinja")
     with open(template_path, encoding='utf-8') as f:
         template = Template(f.read())
 
@@ -188,10 +196,80 @@ def deploy(model_path, port):
         f.write(rendered)
 
     print(f"✔ FastAPI server generated as serve.py")
-    print(f"🚀 Running server at http://localhost:{port}/predict ...")
+    
+    if basic:
+        print(f"🚀 Running basic server at http://localhost:{port}/predict ...")
+    else:
+        print(f"🚀 Running comprehensive server at http://localhost:{port}")
+        print(f"📚 API Documentation: http://localhost:{port}/docs")
+        print(f"🔍 Available endpoints:")
+        print(f"   • GET  / - API information")
+        print(f"   • GET  /health - Health check")
+        print(f"   • GET  /model/info - Model information")
+        print(f"   • GET  /model/schema - Input/output schema")
+        print(f"   • POST /predict - Single prediction")
+        print(f"   • POST /model/benchmark - Performance benchmarking")
+        print(f"   • POST /model/batch - Batch processing")
 
     # Run the server with Uvicorn
     subprocess.run(["uvicorn", "serve:app", "--reload", "--port", str(port)])
+
+@cli.command()
+@click.argument("model_path", type=click.Path(exists=True, dir_okay=False))
+@click.option("--port", default=8000, help="Port to run the API on")
+@click.option("--host", default="0.0.0.0", help="Host to bind the server to")
+@click.option("--reload", is_flag=True, help="Enable auto-reload on code changes")
+def serve(model_path, port, host, reload):
+    """Deploy an ONNX model as a comprehensive FastAPI server with all features."""
+    from onnxruntime import InferenceSession
+
+    # Load model and extract input shape
+    session = InferenceSession(model_path, providers=["CPUExecutionProvider"])
+    input_shape = session.get_inputs()[0].shape
+    input_shape = [d if isinstance(d, int) and d > 0 else 1 for d in input_shape]
+    model_filename = os.path.basename(model_path)
+
+    # Copy the model to current dir for the server to access (only if different)
+    if os.path.abspath(model_path) != os.path.abspath(f"./{model_filename}"):
+        shutil.copy(model_path, f"./{model_filename}")
+
+    # Load and render enhanced Jinja template
+    template_path = os.path.join("templates", "serve_template.py.jinja")
+    with open(template_path, encoding='utf-8') as f:
+        template = Template(f.read())
+
+    rendered = template.render(model_filename=model_filename, input_shape=input_shape)
+
+    # Write the generated FastAPI server
+    with open("serve.py", "w", encoding='utf-8') as f:
+        f.write(rendered)
+
+    print(f"✔ Comprehensive FastAPI server generated as serve.py")
+    print(f"🚀 Starting QuickServeML API server...")
+    print(f"📡 Server URL: http://{host}:{port}")
+    print(f"📚 Interactive API docs: http://{host}:{port}/docs")
+    print(f"📖 ReDoc documentation: http://{host}:{port}/redoc")
+    print(f"\n🔍 Available endpoints:")
+    print(f"   • GET  / - API information and endpoints list")
+    print(f"   • GET  /health - Health check and system status")
+    print(f"   • GET  /model/info - Detailed model information")
+    print(f"   • GET  /model/schema - Input/output schema for API docs")
+    print(f"   • POST /predict - Single prediction with timing")
+    print(f"   • POST /model/benchmark - Performance benchmarking")
+    print(f"   • POST /model/batch - Batch processing with optimization")
+    print(f"   • GET  /model/compare - Model comparison (future feature)")
+    
+    print(f"\n💡 Example usage:")
+    print(f"   curl http://{host}:{port}/health")
+    print(f"   curl http://{host}:{port}/model/info")
+    print(f"   curl -X POST http://{host}:{port}/model/benchmark -H 'Content-Type: application/json' -d '{{\"benchmark_runs\": 50}}'")
+
+    # Run the server with Uvicorn
+    cmd = ["uvicorn", "serve:app", "--host", host, "--port", str(port)]
+    if reload:
+        cmd.append("--reload")
+    
+    subprocess.run(cmd)
 
 if __name__ == "__main__":
     cli()

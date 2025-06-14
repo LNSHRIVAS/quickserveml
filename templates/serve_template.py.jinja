@@ -1,26 +1,289 @@
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 import numpy as np 
 import onnxruntime as ort
+import json
+import time
+import psutil
+import os
+from typing import List, Dict, Any, Optional
+import traceback
 
-app = FastAPI()
+app = FastAPI(
+    title="QuickServeML API",
+    description="Comprehensive ONNX model serving, analysis, and benchmarking API",
+    version="1.0.0"
+)
 
-session = ort.InferenceSession("{{ model_filename }}", providers = ["CPUExecutionProvider"])
-input_name = session.get_inputs()[0].name
+# Global session
+session = None
+input_name = None
+model_info = {}
 
+def load_model():
+    global session, input_name, model_info
+    try:
+        session = ort.InferenceSession("{{ model_filename }}", providers=["CPUExecutionProvider"])
+        input_name = session.get_inputs()[0].name
+        
+        # Store model information
+        model_info = {
+            "model_file": "{{ model_filename }}",
+            "inputs": [
+                {
+                    "name": inp.name,
+                    "shape": [d if isinstance(d, int) else -1 for d in inp.shape],
+                    "type": str(inp.type)
+                } for inp in session.get_inputs()
+            ],
+            "outputs": [
+                {
+                    "name": out.name,
+                    "shape": [d if isinstance(d, int) else -1 for d in out.shape],
+                    "type": str(out.type)
+                } for out in session.get_outputs()
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load model: {str(e)}")
 
-class InputData(BaseModel):
-    data: list
+# Load model on startup
+load_model()
 
+# Pydantic models
+class PredictionInput(BaseModel):
+    data: List[float] = Field(..., description="Input data as a flat list")
+
+class BatchRequest(BaseModel):
+    batch: List[List[float]] = Field(..., description="List of input samples")
+    batch_size: int = Field(default=10, ge=1, le=1000, description="Batch size for processing")
+    parallel: bool = Field(default=False, description="Use parallel processing")
+
+class BenchmarkConfig(BaseModel):
+    warmup_runs: int = Field(default=10, ge=1, le=1000, description="Number of warmup runs")
+    benchmark_runs: int = Field(default=100, ge=1, le=10000, description="Number of benchmark runs")
+    provider: str = Field(default="CPUExecutionProvider", description="ONNX Runtime provider")
+
+# API Endpoints
+
+@app.get("/")
+async def root():
+    """Root endpoint with API information"""
+    return {
+        "message": "QuickServeML API",
+        "version": "1.0.0",
+        "model": model_info["model_file"],
+        "endpoints": {
+            "prediction": "/predict",
+            "model_info": "/model/info",
+            "schema": "/model/schema", 
+            "benchmark": "/model/benchmark",
+            "batch_process": "/model/batch",
+            "health": "/health"
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    try:
+        # Test model inference
+        test_input = np.random.randn(*[d if d > 0 else 1 for d in model_info["inputs"][0]["shape"]]).astype(np.float32)
+        session.run(None, {input_name: test_input})
+        
+        return {
+            "status": "healthy",
+            "model_loaded": True,
+            "memory_usage_mb": psutil.Process().memory_info().rss / 1024 / 1024,
+            "cpu_usage_percent": psutil.cpu_percent()
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "error": str(e)}
+        )
+
+@app.get("/model/info")
+async def get_model_info():
+    """Get detailed model information"""
+    return {
+        "model_file": model_info["model_file"],
+        "inputs": model_info["inputs"],
+        "outputs": model_info["outputs"],
+        "session_providers": session.get_providers(),
+        "session_provider_options": session.get_provider_options()
+    }
+
+@app.get("/model/schema")
+async def get_model_schema():
+    """Get model input/output schema for API documentation"""
+    return {
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                input_name: {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "description": f"Input tensor with shape {model_info['inputs'][0]['shape']}",
+                    "example": np.random.randn(*[d if d > 0 else 1 for d in model_info["inputs"][0]["shape"]]).astype(np.float32).tolist()
+                }
+            },
+            "required": [input_name]
+        },
+        "output_schema": {
+            "type": "object",
+            "properties": {
+                "prediction": {
+                    "type": "array",
+                    "items": {"type": "array", "items": {"type": "number"}},
+                    "description": f"Model output with shape {model_info['outputs'][0]['shape']}"
+                }
+            }
+        }
+    }
 
 @app.post("/predict")
+async def predict(input: PredictionInput):
+    """Make a single prediction"""
+    try:
+        x = np.array(input.data, dtype=np.float32)
+        expected_shape = [d if d > 0 else 1 for d in model_info["inputs"][0]["shape"]]
+        x = x.reshape(expected_shape)
+        
+        start_time = time.time()
+        output = session.run(None, {input_name: x})[0]
+        inference_time = (time.time() - start_time) * 1000  # Convert to ms
+        
+        return {
+            "prediction": output.tolist(),
+            "inference_time_ms": round(inference_time, 3),
+            "input_shape": expected_shape,
+            "output_shape": list(output.shape)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Prediction failed: {str(e)}")
 
-def predict(input: InputData):
+@app.post("/model/benchmark")
+async def benchmark_model(config: BenchmarkConfig):
+    """Benchmark model performance"""
+    try:
+        # Generate test input
+        test_input = np.random.randn(*[d if d > 0 else 1 for d in model_info["inputs"][0]["shape"]]).astype(np.float32)
+        
+        # Warmup runs
+        for _ in range(config.warmup_runs):
+            session.run(None, {input_name: test_input})
+        
+        # Benchmark runs
+        inference_times = []
+        for _ in range(config.benchmark_runs):
+            start_time = time.time()
+            session.run(None, {input_name: test_input})
+            inference_times.append((time.time() - start_time) * 1000)
+        
+        # Calculate statistics with robust float handling
+        def safe_float(val):
+            """Convert value to safe float for JSON serialization"""
+            if val is None:
+                return None
+            if isinstance(val, (int, float)):
+                if np.isnan(val) or np.isinf(val):
+                    return None
+                if val == 0:
+                    return 0.0
+                return float(val)
+            return None
+        
+        # Calculate statistics
+        avg_time = safe_float(np.mean(inference_times))
+        min_time = safe_float(np.min(inference_times))
+        max_time = safe_float(np.max(inference_times))
+        p95_time = safe_float(np.percentile(inference_times, 95))
+        p99_time = safe_float(np.percentile(inference_times, 99))
+        
+        # Calculate throughput safely
+        throughput = None
+        if avg_time is not None and avg_time > 0:
+            throughput = safe_float(1000 / avg_time)
+        
+        # Resource usage
+        memory_usage = safe_float(psutil.Process().memory_info().rss / 1024 / 1024)
+        cpu_usage = safe_float(psutil.cpu_percent())
+        
+        return {
+            "benchmark_config": config.dict(),
+            "results": {
+                "avg_inference_time_ms": avg_time,
+                "min_inference_time_ms": min_time,
+                "max_inference_time_ms": max_time,
+                "p95_inference_time_ms": p95_time,
+                "p99_inference_time_ms": p99_time,
+                "throughput_rps": throughput,
+                "memory_usage_mb": memory_usage,
+                "cpu_usage_percent": cpu_usage,
+                "total_runs": config.benchmark_runs
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Benchmark failed: {str(e)}")
 
-    x = np.array(input.data, dtype = np.float32)
-    x = x.reshape({{ input_shape }})
-    output = session.run(None, {input_name: x})[0]
+@app.post("/model/batch")
+async def batch_process(request: BatchRequest):
+    """Process a batch of inputs"""
+    try:
+        batch_data = request.batch
+        batch_size = len(batch_data)
+        
+        if batch_size > request.batch_size:
+            raise HTTPException(status_code=400, detail=f"Batch size {batch_size} exceeds limit {request.batch_size}")
+        
+        results = []
+        total_time = 0
+        
+        for i, sample_data in enumerate(batch_data):
+            start_time = time.time()
+            x = np.array(sample_data, dtype=np.float32)
+            expected_shape = [d if d > 0 else 1 for d in model_info["inputs"][0]["shape"]]
+            x = x.reshape(expected_shape)
+            
+            output = session.run(None, {input_name: x})[0]
+            inference_time = (time.time() - start_time) * 1000
+            
+            results.append({
+                "sample_id": i,
+                "prediction": output.tolist(),
+                "inference_time_ms": round(inference_time, 3)
+            })
+            total_time += inference_time
+        
+        return {
+            "batch_config": {
+                "batch_size": request.batch_size,
+                "parallel": request.parallel
+            },
+            "results": {
+                "total_samples": batch_size,
+                "total_time_ms": round(total_time, 3),
+                "avg_time_per_sample_ms": round(total_time / batch_size, 3),
+                "throughput_samples_per_sec": round(1000 * batch_size / total_time, 1),
+                "predictions": results
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Batch processing failed: {str(e)}")
 
-    return { "prediction": output.tolist() }
+@app.get("/model/compare")
+async def compare_models():
+    """Compare current model with previous versions (placeholder for future enhancement)"""
+    return {
+        "message": "Model comparison feature coming soon",
+        "current_model": model_info["model_file"],
+        "available_metrics": ["inference_time", "throughput", "memory_usage", "accuracy"]
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
