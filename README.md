@@ -384,7 +384,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Lakshminarayan Shrivas**  
 - GitHub: [@LNSHRIVAS](https://github.com/LNSHRIVAS)
-- Email: [your-email@example.com]
+- Email: [lakshminarayanshrivas7@gmail.com]
 
 ---
 
