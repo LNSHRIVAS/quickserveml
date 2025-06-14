@@ -13,7 +13,7 @@ import numpy as np
 from typing import Dict, Any, List
 
 # Configuration
-BASE_URL = "http://localhost:8002"
+BASE_URL = "http://localhost:8001"
 TIMEOUT = 30
 
 def print_test_header(test_name: str):

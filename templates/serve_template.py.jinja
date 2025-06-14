@@ -1,3 +1,6 @@
+# Author: Lakshminarayan Shrivas
+# Email: lakshminarayanshrivas7@gmail.com
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -188,10 +191,18 @@ async def benchmark_model(config: BenchmarkConfig):
             if val is None:
                 return None
             if isinstance(val, (int, float)):
+                # Handle NaN and infinity
                 if np.isnan(val) or np.isinf(val):
                     return None
+                # Handle zero values
                 if val == 0:
                     return 0.0
+                # Handle very small numbers that might cause issues
+                if abs(val) < 1e-10:
+                    return 0.0
+                # Handle very large numbers
+                if abs(val) > 1e10:
+                    return None
                 return float(val)
             return None
         

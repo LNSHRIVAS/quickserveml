@@ -298,6 +298,10 @@ QuickServeML is evolving from a simple CLI tool to a comprehensive platform that
 
 The roadmap balances immediate value delivery with long-term vision, ensuring that each phase builds upon the previous one while adding significant new capabilities. The focus on both individual productivity and team collaboration makes QuickServeML valuable for researchers, engineers, and organizations at all stages of their ML journey.
 
+## Contact
+
+For questions or suggestions, contact: lakshminarayanshrivas7@gmail.com
+
 ---
 
 **Next Steps**: 

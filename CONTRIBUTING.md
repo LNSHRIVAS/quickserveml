@@ -266,7 +266,7 @@ quickserveml deploy model.onnx
 
 - **GitHub Issues**: [Create an issue](https://github.com/LNSHRIVAS/quickserveml/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/LNSHRIVAS/quickserveml/discussions)
-- **Email**: [your-email@example.com]
+- **Email**: lakshminarayanshrivas7@gmail.com
 
 ## 📄 **License**
 

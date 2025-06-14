@@ -9,10 +9,10 @@ description = "One-command ONNX model serving, benchmarking, and visual inspecti
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Lakshminarayan Shrivas", email = "your-email@example.com"}
+    {name = "Lakshminarayan Shrivas", email = "lakshminarayanshrivas7@gmail.com"}
 ]
 maintainers = [
-    {name = "Lakshminarayan Shrivas", email = "your-email@example.com"}
+    {name = "Lakshminarayan Shrivas", email = "lakshminarayanshrivas7@gmail.com"}
 ]
 keywords = ["onnx", "ml", "api", "fastapi", "benchmarking", "deployment", "machine-learning"]
 classifiers = [

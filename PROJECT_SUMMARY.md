@@ -249,3 +249,7 @@ QuickServeML has been transformed from a basic CLI tool into a comprehensive, pr
 6. **Comprehensive Documentation**: Ready for user adoption
 
 The project is now ready for v1.0.0 release and can serve as a solid foundation for future enhancements and community contributions. 
+
+## Contact Information
+
+If you have any questions or need further assistance, please contact me at lakshminarayanshrivas7@gmail.com. 
