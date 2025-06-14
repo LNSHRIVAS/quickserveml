@@ -6,7 +6,7 @@ with just one command. Provides essential features for ML model analysis,
 optimization, and deployment.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "Lakshminarayan Shrivas"
 __email__ = "lakshminarayanshrivas7@gmail.com"
 __description__ = "One-command ONNX model serving, benchmarking, and visual inspection"
