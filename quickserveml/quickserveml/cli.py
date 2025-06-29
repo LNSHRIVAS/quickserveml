@@ -10,12 +10,27 @@ from jinja2 import Template
 from quickserveml.infer import inspect_onnx
 import json
 
+# Import rich formatting utilities
+try:
+    from quickserveml.cli_utils import get_formatter, success, info, warning, error, section_header
+except ImportError:
+    # Fallback for simple print statements if rich is not available
+    def success(msg, title=None): click.echo(f"✅ {title + ': ' if title else ''}{msg}")
+    def info(msg, title=None): click.echo(f"ℹ️  {title + ': ' if title else ''}{msg}")
+    def warning(msg, title=None): click.echo(f"⚠️  {title + ': ' if title else ''}{msg}")
+    def error(msg, title=None): click.echo(f"❌ {title + ': ' if title else ''}{msg}")
+    def section_header(title, subtitle=None): 
+        click.echo(f"\n=== {title} ===")
+        if subtitle: click.echo(subtitle)
+        click.echo()
+
 @click.group()
 @click.version_option(version="0.1.0", prog_name="QuickServeML")
 def cli():
     """
-    QuickServeML - A lightweight CLI tool to inspect and serve ONNX models as local APIs.
+    🚀 QuickServeML - Lightning-fast ONNX model deployment
     
+    A lightweight CLI tool to inspect and serve ONNX models as local APIs.
     This tool helps you quickly deploy your ONNX models as FastAPI servers
     for testing and inference without writing boilerplate code.
     """
@@ -34,32 +49,37 @@ def inspect(model_path, verbose, export_json, schema):
     detailed layer information when used with --verbose flag.
     """
     try:
+        section_header("🔍 Model Inspection", f"Analyzing {model_path}")
+        
         # Basic inspection
+        info("Loading and analyzing model structure...")
         model_info = inspect_onnx(str(model_path), verbose=verbose, export_json=export_json)
         
         # Generate schema if requested
         if schema:
-            click.echo("\n📋 Model Schema:")
+            section_header("📋 Model Schema")
             try:
                 from quickserveml.infer import generate_model_schema
                 schema_info = generate_model_schema(str(model_path))
                 
-                click.echo("Input Schema:")
+                info("Input Schema:")
                 for inp in schema_info["inputs"]:
-                    click.echo(f"  - {inp['name']}: {inp['shape']} ({inp['type']})")
+                    click.echo(f"  • {inp['name']}: {inp['shape']} ({inp['type']})")
                 
-                click.echo("\nOutput Schema:")
+                info("Output Schema:")
                 for out in schema_info["outputs"]:
-                    click.echo(f"  - {out['name']}: {out['shape']} ({out['type']})")
+                    click.echo(f"  • {out['name']}: {out['shape']} ({out['type']})")
                 
-                click.echo("\nExample Request Format:")
+                info("Example Request Format:")
                 click.echo(json.dumps(schema_info["example_request"], indent=2))
                 
             except Exception as e:
-                click.echo(f"⚠️  Failed to generate schema: {e}")
+                warning(f"Failed to generate schema: {e}")
+        
+        success("Model inspection completed successfully")
         
     except Exception as e:
-        click.echo(f"❌ Error: {e}", err=True)
+        error(f"Model inspection failed: {e}")
         sys.exit(1)
 
 @cli.command()
@@ -81,20 +101,20 @@ def deploy(model_path, port, host, reload, verbose, visualize):
     import shutil
     from pathlib import Path
     from jinja2 import Template
+    
     try:
-        if verbose:
-            click.echo(f"🚀 Starting deployment of model: {model_path}")
+        section_header("🚀 Model Deployment", f"Deploying {model_path}")
         
         # Visualize with Netron if requested
         if visualize:
-            click.echo("🖼️  Launching Netron to visualize the model in your browser...")
+            info("Launching Netron to visualize the model in your browser...")
             venv_path = Path(sys.executable).parent
             if platform.system() == "Windows":
                 netron_exe = venv_path / "netron.exe"
             else:
                 netron_exe = venv_path / "netron"
             if not netron_exe.exists():
-                click.echo("🔎 Netron not found in venv. Installing Netron...")
+                info("Netron not found in venv. Installing Netron...")
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "netron"])
             # Launch Netron in the background
             subprocess.Popen([str(netron_exe), str(model_path)])
@@ -103,19 +123,19 @@ def deploy(model_path, port, host, reload, verbose, visualize):
         from onnxruntime import InferenceSession
         
         # Load model and extract input shape
-        if verbose:
-            click.echo("📥 Loading ONNX model...")
+        info("Loading ONNX model...")
         
         session = InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
         input_shape = session.get_inputs()[0].shape
         input_shape = [d if isinstance(d, int) and d > 0 else 1 for d in input_shape]
         model_filename = Path(model_path).name
         
+        success(f"Model loaded successfully")
         if verbose:
-            click.echo(f"✅ Model loaded successfully")
-            click.echo(f"📊 Input shape: {input_shape}")
+            info(f"Input shape: {input_shape}")
         
         # Copy the model to current dir for the server to access
+        info(f"Copying model to working directory: {model_filename}")
         shutil.copy(model_path, f"./{model_filename}")
         
         # Get the template path relative to the package
@@ -123,9 +143,11 @@ def deploy(model_path, port, host, reload, verbose, visualize):
         template_path = package_dir / "templates" / "serve_template.py.jinja"
         
         if not template_path.exists():
+            error(f"Template not found at {template_path}")
             raise FileNotFoundError(f"Template not found at {template_path}")
         
         # Load and render Jinja template with UTF-8 encoding
+        info("Generating FastAPI server code...")
         with open(template_path, 'r', encoding='utf-8') as f:
             template = Template(f.read())
         
@@ -140,11 +162,15 @@ def deploy(model_path, port, host, reload, verbose, visualize):
         with open("serve.py", "w", encoding='utf-8') as f:
             f.write(rendered)
         
-        click.echo(f"✅ FastAPI server generated as serve.py")
-        click.echo(f"🌐 Server will be available at http://{host}:{port}")
-        click.echo(f"📝 API endpoint: http://{host}:{port}/predict")
-        click.echo(f"📚 API docs: http://{host}:{port}/docs")
-        click.echo("🚀 Starting server...")
+        success("FastAPI server generated as serve.py")
+        
+        # Display server information  
+        section_header("🌐 Server Information")
+        info(f"Server URL: http://{host}:{port}")
+        info(f"API endpoint: http://{host}:{port}/predict")
+        info(f"API documentation: http://{host}:{port}/docs")
+        
+        info("Starting server with Uvicorn...")
         
         # Run the server with Uvicorn
         cmd = ["uvicorn", "serve:app", "--host", host, "--port", str(port)]
@@ -153,11 +179,11 @@ def deploy(model_path, port, host, reload, verbose, visualize):
         subprocess.run(cmd)
         
     except ImportError as e:
-        click.echo(f"❌ Missing dependency: {e}", err=True)
-        click.echo("💡 Try installing with: pip install onnxruntime", err=True)
+        error(f"Missing dependency: {e}")
+        info("Try installing with: pip install onnxruntime")
         sys.exit(1)
     except Exception as e:
-        click.echo(f"❌ Error deploying model: {e}", err=True)
+        error(f"Error deploying model: {e}")
         sys.exit(1)
 
 @cli.command()
@@ -170,6 +196,8 @@ def test(port, host):
     This command sends a test request to the running API server.
     """
     try:
+        section_header("🧪 API Testing", f"Testing server at {host}:{port}")
+        
         import requests
         import numpy as np
         
@@ -178,7 +206,7 @@ def test(port, host):
         
         url = f"http://{host}:{port}/predict"
         
-        click.echo(f"🧪 Testing API at {url}")
+        info(f"Sending test request to {url}")
         
         response = requests.post(
             url,
@@ -187,22 +215,22 @@ def test(port, host):
         )
         
         if response.status_code == 200:
-            click.echo("✅ API test successful!")
-            click.echo(f"📊 Response: {response.json()}")
+            success("API test successful!")
+            info(f"Response: {response.json()}")
         else:
-            click.echo(f"❌ API test failed with status {response.status_code}")
-            click.echo(f"📄 Response: {response.text}")
+            error(f"API test failed with status {response.status_code}")
+            warning(f"Response: {response.text}")
             
     except ImportError:
-        click.echo("❌ Missing dependency: requests", err=True)
-        click.echo("💡 Install with: pip install requests", err=True)
+        error("Missing dependency: requests")
+        info("Install with: pip install requests")
         sys.exit(1)
     except requests.exceptions.ConnectionError:
-        click.echo(f"❌ Could not connect to server at {host}:{port}", err=True)
-        click.echo("💡 Make sure the server is running with: quickserveml deploy <model>", err=True)
+        error(f"Could not connect to server at {host}:{port}")
+        info("Make sure the server is running with: quickserveml deploy <model>")
         sys.exit(1)
     except Exception as e:
-        click.echo(f"❌ Error testing API: {e}", err=True)
+        error(f"Error testing API: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

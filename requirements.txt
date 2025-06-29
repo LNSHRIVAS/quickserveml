@@ -7,4 +7,5 @@ pydantic
 jinja2
 requests
 netron
-psutil 
+psutil
+rich 
