@@ -104,13 +104,13 @@ quickserveml serve-registry my-model --version v1.0.0 --port 8000
 
 ```bash
 # 1. Register your model
-quickserveml registry-add my-model mnist-8.onnx --author "Lakshmi" --tags "vision,mnist"
+quickserveml registry-add my-model mnist-8.onnx --author "Alex" --tags "vision,mnist"
 
 # 2. Benchmark and save metrics
 quickserveml benchmark-registry my-model --save-metrics
 
 # 3. Register a new version (after retraining)
-quickserveml registry-add my-model mnist-8-v2.onnx --version v1.0.1 --author "Lakshmi" --tags "vision,mnist"
+quickserveml registry-add my-model mnist-8-v2.onnx --version v1.0.1 --author "Alex" --tags "vision,mnist"
 
 # 4. Benchmark the new version
 quickserveml benchmark-registry my-model --version v1.0.1 --save-metrics
