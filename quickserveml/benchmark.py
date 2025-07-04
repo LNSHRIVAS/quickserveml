@@ -5,10 +5,15 @@ import psutil
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 import statistics
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from onnxruntime import InferenceSession
 import threading
 import queue
+import sqlite3
+import json
+import os
+from datetime import datetime
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -28,6 +33,82 @@ class BenchmarkResult:
     warmup_runs: int
     benchmark_runs: int
     total_time_seconds: float
+
+
+@dataclass
+class BenchmarkMetadata:
+    model_version: str
+    dataset_version: str
+    run_params: Dict[str, Any] = field(default_factory=dict)
+    metrics: Dict[str, Any] = field(default_factory=dict)  # All computed metrics
+    resource_usage: Dict[str, Any] = field(default_factory=dict)  # memory, CPU, GPU, etc.
+    explainability: Dict[str, Any] = field(default_factory=dict)
+    run_time: str = field(default_factory=lambda: datetime.now().isoformat())
+    hardware_info: Dict[str, Any] = field(default_factory=dict)
+    logs: str = ""
+    user_notes: str = ""
+    tags: List[str] = field(default_factory=list)
+
+
+class BenchmarkRegistry:
+    def __init__(self, db_path=None):
+        self.db_path = db_path or os.path.expanduser("~/.quickserveml/registry/benchmarks.db")
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self._init_database()
+
+    def _init_database(self):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS benchmarks (
+                    model_version TEXT,
+                    dataset_version TEXT,
+                    run_params TEXT,
+                    metrics TEXT,
+                    resource_usage TEXT,
+                    explainability TEXT,
+                    run_time TEXT,
+                    hardware_info TEXT,
+                    logs TEXT,
+                    user_notes TEXT,
+                    tags TEXT,
+                    PRIMARY KEY (model_version, dataset_version, run_time)
+                )
+            ''')
+            conn.commit()
+
+    def add_benchmark(self, metadata: BenchmarkMetadata):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute('''
+                INSERT INTO benchmarks (model_version, dataset_version, run_params, metrics, resource_usage, explainability, run_time, hardware_info, logs, user_notes, tags)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                metadata.model_version, metadata.dataset_version, json.dumps(metadata.run_params), json.dumps(metadata.metrics),
+                json.dumps(metadata.resource_usage), json.dumps(metadata.explainability), metadata.run_time, json.dumps(metadata.hardware_info),
+                metadata.logs, metadata.user_notes, json.dumps(metadata.tags)
+            ))
+            conn.commit()
+
+    def list_benchmarks(self, model_version: str = None, dataset_version: str = None) -> List[BenchmarkMetadata]:
+        with sqlite3.connect(self.db_path) as conn:
+            query = 'SELECT * FROM benchmarks'
+            params = []
+            conditions = []
+            if model_version:
+                conditions.append('model_version = ?')
+                params.append(model_version)
+            if dataset_version:
+                conditions.append('dataset_version = ?')
+                params.append(dataset_version)
+            if conditions:
+                query += ' WHERE ' + ' AND '.join(conditions)
+            cursor = conn.execute(query, params)
+            return [
+                BenchmarkMetadata(
+                    model_version=row[0], dataset_version=row[1], run_params=json.loads(row[2]), metrics=json.loads(row[3]),
+                    resource_usage=json.loads(row[4]), explainability=json.loads(row[5]), run_time=row[6], hardware_info=json.loads(row[7]),
+                    logs=row[8], user_notes=row[9], tags=json.loads(row[10])
+                ) for row in cursor.fetchall()
+            ]
 
 
 class ModelBenchmarker:

@@ -60,9 +60,91 @@ quickserveml batch model.onnx --optimize --verbose
 
 ### Model Visualization
 ```bash
-quickserveml deploy model.onnx --visualize
+quickserveml serve model.onnx --visualize
 ```
 Opens Netron for interactive model graph inspection.
+
+## Model Registry
+
+QuickServeML features an **enterprise-grade model registry** for versioning, metadata management, benchmarking, and lifecycle tracking of your ML models.
+
+### Why Use the Model Registry?
+- **Version control** for all your models
+- **Centralized storage** and metadata (author, tags, status, etc.)
+- **Benchmark and compare** different versions
+- **Easy deployment** from the registry
+- **Team collaboration** and reproducibility
+
+### Registry CLI Quickstart
+
+```bash
+# Register a new model
+quickserveml registry-add my-model mnist-8.onnx --author "Your Name" --tags "vision,mnist" --description "MNIST classifier"
+
+# List all models in the registry
+quickserveml registry-list --verbose
+
+# Update model metadata
+quickserveml registry-update my-model v1.0.0 --status validated --notes "Passed all tests"
+
+# Benchmark a model and save metrics to the registry
+quickserveml benchmark-registry my-model --version v1.0.0 --save-metrics
+
+# Compare two versions of a model
+quickserveml registry-compare my-model v1.0.0 v1.0.1
+
+# Export a model from the registry
+quickserveml registry-export my-model exported_model.onnx --version v1.0.0
+
+# Serve a model directly from the registry
+quickserveml serve-registry my-model --version v1.0.0 --port 8000
+```
+
+### Registry Workflow Example
+
+```bash
+# 1. Register your model
+quickserveml registry-add my-model mnist-8.onnx --author "Lakshmi" --tags "vision,mnist"
+
+# 2. Benchmark and save metrics
+quickserveml benchmark-registry my-model --save-metrics
+
+# 3. Register a new version (after retraining)
+quickserveml registry-add my-model mnist-8-v2.onnx --version v1.0.1 --author "Lakshmi" --tags "vision,mnist"
+
+# 4. Benchmark the new version
+quickserveml benchmark-registry my-model --version v1.0.1 --save-metrics
+
+# 5. Compare versions
+quickserveml registry-compare my-model v1.0.0 v1.0.1
+
+# 6. Deploy the best version
+quickserveml serve-registry my-model --version v1.0.1 --port 8000
+```
+
+**Sample Output (Comparison):**
+```
+============================================================
+MODEL COMPARISON: my-model v1.0.0 vs v1.0.1
+============================================================
+Metric         v1.0.0     v1.0.1     Difference
+------------------------------------------------------------
+accuracy       0.9765     0.9812     +0.0047
+latency_ms     0.18       0.15       -0.03
+throughput_rps 5500       6100       +600
+file_size      1.2MB      1.1MB      -0.1MB
+------------------------------------------------------------
+```
+
+### Contributing Models to the Registry
+
+- Use `registry-add` to register your model with metadata.
+- Use `registry-update` to update status, notes, or metrics.
+- Use `registry-list` and `registry-get` to explore available models.
+- Use `benchmark-registry` to benchmark and save metrics.
+- Use `registry-compare` to compare versions and select the best model for deployment.
+
+See the [Contributing Guide](CONTRIBUTING.md) for more details.
 
 ---
 
@@ -218,14 +300,11 @@ Optimal batch size: 8 (3159.3 samples/sec)
 
 ### Model Deployment
 ```bash
-# Basic deployment (simple prediction endpoint)
-quickserveml deploy model.onnx --port 8000
-
 # Comprehensive API server (all endpoints)
 quickserveml serve model.onnx --port 8000
 
 # With visualization
-quickserveml deploy model.onnx --port 8000 --visualize
+quickserveml serve model.onnx --port 8000 --visualize
 ```
 
 ---

@@ -14,6 +14,7 @@ QuickServeML aims to be the ultimate tool for ML researchers and engineers to qu
 - ✅ Schema generation and validation
 - ✅ Batch processing optimization
 - ✅ Basic model deployment (prediction API)
+- ✅ Model registry with versioning, metadata, benchmarking, and CLI workflows
 
 #### **Enhanced API (Just Added)**
 - ✅ Comprehensive FastAPI server with all CLI features

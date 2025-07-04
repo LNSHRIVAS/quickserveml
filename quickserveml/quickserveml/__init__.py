@@ -13,7 +13,12 @@ __description__ = "One-command ONNX model serving, benchmarking, and visual insp
 __url__ = "https://github.com/LNSHRIVAS/quickserveml"
 __license__ = "MIT"
 
-# Import main CLI interface
-from .cli import cli
+# Import main CLI interface from the parent directory
+import sys
+import os
+parent_dir = os.path.dirname(os.path.dirname(__file__))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+from quickserveml.cli import cli
 
 __all__ = ["cli"]

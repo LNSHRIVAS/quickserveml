@@ -147,6 +147,21 @@ class CLIFormatter:
         else:
             return PlainProgress(description, self.console)
     
+    def progress_bar(self, total, description="Processing..."):
+        """Create a progress bar with total count and description."""
+        if self.supports_color:
+            progress = Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=self.console,
+            )
+            task_id = progress.add_task(description, total=total)
+            return ProgressBar(progress, task_id)
+        else:
+            return PlainProgressBar(description, total, self.console)
+    
     def print_json(self, data, title=None):
         """Print JSON data with nice formatting."""
         if self.supports_color:
@@ -306,4 +321,46 @@ def error(message, title=None):
 
 def section_header(title, subtitle=None):
     """Display a section header."""
-    get_formatter().section_header(title, subtitle)
+    return get_formatter().section_header(title, subtitle)
+
+
+class ProgressBar:
+    """Rich progress bar wrapper for context manager usage."""
+    
+    def __init__(self, progress, task_id):
+        self.progress = progress
+        self.task_id = task_id
+    
+    def __enter__(self):
+        self.progress.start()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.progress.stop()
+    
+    def advance(self, amount=1):
+        """Advance the progress bar by the specified amount."""
+        self.progress.update(self.task_id, advance=amount)
+
+
+class PlainProgressBar:
+    """Plain text progress bar for environments without rich support."""
+    
+    def __init__(self, description, total, console):
+        self.description = description
+        self.total = total
+        self.console = console
+        self.current = 0
+    
+    def __enter__(self):
+        self.console.print(f"{self.description} (0/{self.total})")
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.console.print(f"{self.description} completed ({self.total}/{self.total})")
+    
+    def advance(self, amount=1):
+        """Advance the progress bar by the specified amount."""
+        self.current += amount
+        if self.current % max(1, self.total // 10) == 0:  # Update every 10%
+            self.console.print(f"{self.description} ({self.current}/{self.total})")

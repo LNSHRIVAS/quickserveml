@@ -150,7 +150,6 @@ QuickServeML is a comprehensive CLI tool and Python package for inspecting and s
 
 #### Available Commands
 - **`inspect`**: Comprehensive model analysis and inspection
-- **`deploy`**: Basic FastAPI server with simple prediction endpoint
 - **`serve`**: Comprehensive FastAPI server with all endpoints
 - **`benchmark`**: Performance benchmarking and analysis
 - **`schema`**: Schema generation and validation
@@ -161,6 +160,49 @@ QuickServeML is a comprehensive CLI tool and Python package for inspecting and s
 - **Argument Validation**: Input validation and error checking
 - **Verbose Output**: Detailed information with `--verbose` flag
 - **Configuration Options**: Customizable parameters for all commands
+
+## Model Registry in Action
+
+The model registry enables robust versioning, benchmarking, and deployment workflows. Here’s a typical workflow:
+
+```bash
+# Register a new model
+quickserveml registry-add my-model mnist-8.onnx --author "Your Name" --tags "vision,mnist"
+
+# List all models
+quickserveml registry-list --verbose
+
+# Benchmark and save metrics
+quickserveml benchmark-registry my-model --save-metrics
+
+# Register a new version
+quickserveml registry-add my-model mnist-8-v2.onnx --version v1.0.1 --author "Your Name"
+
+# Benchmark the new version
+quickserveml benchmark-registry my-model --version v1.0.1 --save-metrics
+
+# Compare versions
+quickserveml registry-compare my-model v1.0.0 v1.0.1
+
+# Deploy the best version
+quickserveml serve-registry my-model --version v1.0.1 --port 8000
+```
+
+**Sample Comparison Output:**
+```
+============================================================
+MODEL COMPARISON: my-model v1.0.0 vs v1.0.1
+============================================================
+Metric         v1.0.0     v1.0.1     Difference
+------------------------------------------------------------
+accuracy       0.9765     0.9812     +0.0047
+latency_ms     0.18       0.15       -0.03
+throughput_rps 5500       6100       +600
+file_size      1.2MB      1.1MB      -0.1MB
+------------------------------------------------------------
+```
+
+This workflow demonstrates how QuickServeML’s registry supports the full ML model lifecycle, from registration and benchmarking to comparison and deployment.
 
 ## Technical Achievements
 

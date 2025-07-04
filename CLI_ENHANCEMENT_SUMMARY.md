@@ -48,7 +48,7 @@
 - Progress indicators for batch operations
 - Different visual styles for different batch modes (file, synthetic, optimization)
 
-#### `deploy` and `serve` commands:
+#### `serve` command:
 - Server configuration tables
 - URL and endpoint information in structured format
 - Clear separation between different types of information
@@ -84,3 +84,17 @@ All commands have been tested and work correctly with:
 - ✅ Proper error handling and visual feedback
 
 The CLI now provides a significantly enhanced user experience while maintaining full backward compatibility and accessibility.
+
+## Model Registry CLI Enhancements
+
+- Added comprehensive CLI commands for model registry management:
+  - `registry-add`: Register models with metadata and versioning
+  - `registry-list`: List all registered models with filters and verbose output
+  - `registry-update`: Update model metadata, status, and metrics
+  - `registry-compare`: Compare two model versions with dynamic metrics
+  - `registry-export`: Export models from the registry
+  - `serve-registry`: Deploy models directly from the registry
+  - `benchmark-registry`: Benchmark and save metrics for registry models
+- All registry commands feature rich formatting, color-coded output, and structured tables
+- Registry workflows are integrated with benchmarking, comparison, and deployment for a seamless user experience
+- Professional error handling and feedback for all registry operations
